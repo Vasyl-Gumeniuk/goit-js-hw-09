@@ -1,7 +1,7 @@
 import flatpickr from 'flatpickr';
 import 'flatpickr/dist/flatpickr.min.css';
-// import Notiflix from 'notiflix';
-// import { Notify } from 'notiflix/build/notiflix-notify-aio';
+import Notiflix from 'notiflix';
+import { Notify } from 'notiflix/build/notiflix-notify-aio';
 const refs = {
     BtnStartEl: document.querySelector('button[data-start]'),
     inputDays: document.querySelector('.field [data-days]'),
@@ -10,15 +10,20 @@ const refs = {
     inputSeconds: document.querySelector('.field [data-seconds]'),
 }
 
+refs.BtnStartEl.disabled = 'disabled';
 const SELECTED_DATA = 'selected-data-item';
 const options = {
   enableTime: true,
   time_24hr: true,
   defaultDate: new Date(),
-  minDate: "today",
   minuteIncrement: 1,
     onClose(selectedDates) {
-    localStorage.setItem(SELECTED_DATA, selectedDates[0]);
+        if (this.selectedDates[0] > Date.now()) {
+            refs.BtnStartEl.disabled = null;
+            Notiflix.Notify.success('Goog! You choose a date in the future');
+        } else {
+            return Notiflix.Notify.failure('Please choose a date in the future');
+        }
   },
 };
 
@@ -36,20 +41,20 @@ class Timer {
         if (this.isActive) {
             return;
         }
-        const startTimeEl = Date.parse(localStorage.getItem(SELECTED_DATA));
+        const startTimeEl = fp.selectedDates[0].getTime();
         this.isActive = true;
 
         this.intervalId = setInterval(() => {
             const currentTimeEl = Date.now();
             const deltaTime = startTimeEl - currentTimeEl;
-            if (deltaTime <= 1) {
-                return;
-            }
             const time = this.convertMs(deltaTime);
-            
             this.onTick(time);
-            console.log(deltaTime);
+            if (deltaTime < 1000) {
+                clearInterval(this.intervalId);
+            }
         }, ACTION_DELAY);
+        
+        refs.BtnStartEl.disabled = 'disabled';
     };
     convertMs(ms) {
         const second = 1000;
@@ -80,27 +85,5 @@ function renderInterface ({ days, hours, minutes, seconds }) {
     refs.inputSeconds.textContent = `${seconds}`;
 };
 
+
 refs.BtnStartEl.addEventListener('click', timer.start.bind(timer));
-
-// const timer = {
-//     intervalId: null,
-//     isActive: false,
-//     start() {
-//         if (this.isActive) {
-//             return;
-//         }
-//         const startTimeEl = Date.parse(localStorage.getItem(SELECTED_DATA));
-//         this.isActive = true;
-
-//         this.intervalId = setInterval(() => {
-//             const currentTimeEl = Date.now();
-//             const deltaTime = startTimeEl - currentTimeEl;
-//             const { days, hours, minutes, seconds } = convertMs(deltaTime);
-//             refs.inputDays.textContent = `${days}`;
-//             refs.inputHours.textContent = `${hours}`;
-//             refs.inputMinutes.textContent = `${minutes}`;
-//             refs.inputSeconds.textContent = `${seconds}`;
-//             console.log(`${days}:${hours}:${minutes}:${seconds}`);
-//         }, ACTION_DELAY);
-//     }
-// };
