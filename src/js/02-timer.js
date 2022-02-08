@@ -47,11 +47,14 @@ class Timer {
         this.intervalId = setInterval(() => {
             const currentTimeEl = Date.now();
             const deltaTime = startTimeEl - currentTimeEl;
+
+            if (deltaTime < 0) {
+                clearInterval(this.intervalId);
+                return;
+            }
+            
             const time = this.convertMs(deltaTime);
             this.onTick(time);
-            if (deltaTime < 1000) {
-                clearInterval(this.intervalId);
-            }
         }, ACTION_DELAY);
         
         refs.BtnStartEl.disabled = 'disabled';
